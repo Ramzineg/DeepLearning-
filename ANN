@@ -1,0 +1,108 @@
+
+
+from __future__ import print_function
+
+import keras
+from keras.datasets import fashion_mnist
+from keras.models import Sequential
+from keras.layers import Dense, Dropout
+from keras.optimizers import RMSprop
+import numpy as np 
+import matplotlib.pyplot as plt
+import tensorflow as tf
+
+
+
+
+(train_and_validation_images, train_and_validation_labels), (test_images, test_labels) = fashion_mnist.load_data()
+
+train_and_validation_images.shape
+
+# Construct a validation set from the last 10000 images and labels from 
+# train_and_validation_images and train_and_validation_labels
+validation_images = train_and_validation_images[-10000:, :, :]
+validation_labels = train_and_validation_labels[:10000]
+
+# Construct a training set from the first 50000 images and labels.
+train_images = train_and_validation_images[:50000, :, :]
+train_labels = train_and_validation_labels[:50000]
+
+text_labels = ['T-shirt/top', 'Trouser', 'Pullover', 'Dress', 'Coat', 'Sandal', 'Shirt', 'Sneaker', 'Bag', 'Ankle boot']
+
+plt.figure()
+random_index = np.random.randint(0, len(train_images))
+plt.imshow(train_images[random_index], cmap='gray')
+plt.colorbar()
+numerical_label = train_labels[random_index]
+text_description = text_labels[numerical_label]
+plt.title('True Class: {} ("{}")'.format(numerical_label, text_description))
+
+plt.gca().grid(False)
+
+# Another view, showing 50 randomly selected images at a time
+plt.figure(figsize=(20,20))
+for i in range(50):
+    plt.subplot(5,10,i+1)
+    plt.xticks([])
+    plt.yticks([])
+    plt.grid('off')
+    
+    img_index = np.random.randint(0, 50000)
+    plt.imshow(train_images[img_index], cmap=plt.cm.gray)
+    plt.xlabel(text_labels[train_labels[img_index]])
+
+"""# Preprocess"""
+
+test_images.shape
+
+train_images_model = train_images.reshape((50000, 28 * 28))
+train_images_model = train_images_model / 255
+test_images_model =  test_images.reshape((10000, 28*28))
+test_images_model =   test_images_model / 255
+validation_images_model = validation_images.reshape((10000, 28 * 28))
+validation_images_model = validation_images_model / 255
+
+# convert class vectors to binary class matrices
+train_labels_categ = keras.utils.to_categorical(train_labels, 10)
+validation_labels_categ = keras.utils.to_categorical(validation_labels, 10)
+test_labels_categ = keras.utils.to_categorical(test_labels, 10)
+
+"""# Train"""
+
+batch_size = 64
+num_classes = 10
+epochs = 60
+
+# Create a sequential model here 
+model = Sequential()
+model.add(Dense(input_dim = 784 , units = 10, activation="softmax"))
+model.add(Dense(input_dim = 784 , units = 10, activation="relu"))  
+model.add(Dense(input_dim = 784 , units = 10, activation="relu"))
+model.add(Dense(input_dim = 784 , units = 10, activation="softmax"))
+model.add(Dense(input_dim = 784 , units = 10, activation="softmax" ))
+
+
+# End Code
+
+model.compile(loss='categorical_crossentropy',
+              optimizer=RMSprop(),
+              metrics=['accuracy'])
+
+history = model.fit(train_images_model, train_labels_categ,
+                    batch_size=batch_size,
+                    epochs=epochs,
+                    verbose=1,
+                    validation_data=(validation_images_model, validation_labels_categ))
+
+"""# Test"""
+
+score = model.evaluate(test_images_model, test_labels_categ, verbose=0)
+print('Test accuracy:', score[1])
+
+test_logits = model.predict(test_images_model)
+
+
+test_predictions = np.argmax(test_logits, axis=1)
+
+test_predictions
+
